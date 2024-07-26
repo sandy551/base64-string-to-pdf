@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="5a697402-93af-4689-b1c3-55c4f93bf1be" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="demoFlow" doc:id="8b9f485b-131e-4007-b9a7-8a7710d29f40" >
+		<http:listener doc:name="Listener" doc:id="4117ee40-8e26-4b78-9c0d-9580a61b3bda" path="/string-pdf" config-ref="HTTP_Listener_config"/>
+		<ee:transform doc:name="base64 to form-data" doc:id="cd3cf5ce-fde0-406c-94b9-2a1096b51fbc" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Binaries
+output multipart/form-data
+---
+{
+	parts: {
+		base64Content: {
+			headers: {
+				"Content-Type": "application/pdf"
+			},
+			content: fromBase64(payload)
+		}
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[payload]" doc:name="form-data to pdf" doc:id="2e4a2eba-1eed-45f2-8c4a-a50f32c8e85d" variableName="pdfFile" mimeType="application/pdf"/>
+		<file:write doc:id="45f2444d-41c5-44e5-adbb-b10d8415f55f" path="C:\Users\Sandeep K\Documents\demo\string-to-pdf\base64-to-pdf.pdf" doc:name="Write pdf file">
+			<file:content ><![CDATA[#[vars.pdfFile]]]></file:content>
+		</file:write>
+		<ee:transform doc:name="pdf response" doc:id="9a61576a-bb21-4686-a084-b3fd8b72738e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[vars.pdfFile]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
